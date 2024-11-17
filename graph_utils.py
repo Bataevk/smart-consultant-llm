@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     load_keys()
 
-    WORKING_DIR = "./db_caches/"
+    WORKING_DIR = "./.db_caches/"
     rag = init_rag(
         working_dir = WORKING_DIR, 
         model = llm_model_func , 

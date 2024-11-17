@@ -36,7 +36,6 @@ graph TD;
     A --> D[Utils]  
     A --> E[Config]  
     
-    B --> B1[RequestHandler: Обработка входящих запросов от интерфейсов]  
     B --> B2[ResponseGenerator: Формирование ответов для интерфейсов]  
     B --> B3[OpenAPIHost: Хостинг API для интерфейсов]  
 

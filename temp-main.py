@@ -1,8 +1,11 @@
 # Langchain imports
-from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+# from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
+from langchain_core.prompts import PromptTemplate
+# from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain.tools import tool
+
 from utils import *
+from graph_utils import get_default_init_rag
 
 
 # Import chat side chats
@@ -14,110 +17,94 @@ from lightrag import LightRAG, QueryParam
 
 WORKING_DIR = "./db_caches/"
 
-rephrase_prompt = '''\
 
-**Task:** You are an advanced text processing model. Your goal is to take the provided chat history and question, then reformulate the question to be more detailed and self-contained. In your response, replace pronouns and vague references with specific nouns and subject matter, ensuring the final question can stand alone without needing the chat history.
+BASE_TEMPLATE = '''\
+## Task:
+You are a ai-assistant created to consult citizens on government services and offerings. Your task is to help users find information, answer questions, and provide recommendations in the following categories:
 
-**Input Format:**
+1. **Utilities**: Questions about payment of utility bills, contract agreements, submitting repair or maintenance requests.
+2. **Healthcare**: Consultations regarding appointment booking, mandatory health insurance policy issuance, vaccinations, and the operation of medical institutions.
+3. **Education**: Information about kindergartens, schools, universities, admission rules, benefits, and supplemental education programs.
+4. **Transportation**: Public transport schedules, issuing discounted travel passes, information about fines, and vehicle registration.
 
-1. **Chat History:** 
-```
-{chat_history}
-```
+**Functional Requirements:**
 
-2. **Question:** {question}
+- Respond to questions very detailed, clearly, and directly.
+- If a question goes beyond your functionality, politely redirect the user to the appropriate government services.
+- Communication style: polite, neutral, with an emphasis on helpfulness and information accessibility.
+- The response format should include:
+  - Plain text with specific information.
+  - Additional links to official resources, if available.
+  - Ask clarifying questions if necessary to better understand the user's request.
 
-**Instructions:** 
-- Analyze the chat history to understand the context and key subjects discussed.
-- Identify and replace all pronouns and ambiguous terms in the question with their corresponding nouns or phrases.
-- Ensure that the newly structured question flows logically and makes sense without requiring any additional context.
-'''
+**For answering questions in the main four areas (Utilities, Healthcare, Education, Transportation)**, use the function to search for answers in the knowledge base. This will ensure the accuracy and relevance of the information. 
+  For example:
+- For questions about utility bill payments or booking an appointment with a doctor, queries should be executed through a knowledge base containing up-to-date information on tariffs, services, and available offerings.
+- For obtaining information on school rules or transportation services, the database should also be utilized.
+  
 
-
-# Example
-'''
-**Example:**
-1. **Chat History:**  
-   User: "Can you tell me how it works?"  
-   Assistant: "Sure! It helps people with their tasks."  
-
-2. **Question:** "What is it?"
-
-**Expected Output:**  
-"What is the tool that assists people with their tasks, and how does it work?"
-'''
+**For processing requests related to personal user information**, such as:
+- viewing meter readings (e.g., water, gas, electricity meters),
+- the time to book an appointment with a doctor,
+- the amount of the current fine,
+invoke the relevant functions to handle these requests. 
 
 
-response_prompt = '''\
-Task: You are an advanced text processing model. Your job is to analyze the provided chat history, user question, and detailed answer from an external source, then generate a contextually relevant response to the user's question, incorporating relevant information from all inputs.
+**Technical Recommendations:**
+- Ensure the model understands the context of user inquiries.
+- Use a question-answer structure for intuitive communication.
+- Provide step-by-step instructions when necessary.
 
-Input Format:
+**Working with Functions:**
+- For requests involving personal data (meters, fines, doctor appointments), invoke the relevant functions.
+- For other questions (general consultations), use the knowledge base for answers.
 
+
+## Input Format:
 Chat History: 
 ```
 {chat_history}
 ```
 Question: {question}
 
-Detailed Answer:
-```
-{context}
-```
-
-Instructions:
-
-Review the chat history to understand the context of the conversation, including previous questions and answers.
-Analyze the user’s question to determine its intent and what specific information the user is seeking.
-Consider the detailed answer from the external source as a reference, incorporating its relevant insights while ensuring your response is tailored to the user's question and the overall context of the chat.
-Ensure that your response is clear, concise, and directly addresses the user's question.
 '''
 
 
 config = {
-    "base_url": "https://openrouter.ai/api/v1",
-    "model": "liquid/lfm-40b:free",
-    "temperature": 0.3
+    "base_url": "https://integrate.api.nvidia.com/v1",
+    "model": "nvidia/llama-3.1-nemotron-70b-instruct"
 }
 
 
 
 
+@tool
+def search(query: str) -> str:
+    """search for an answer in the knowledge base.
+    
+    parameters:
+        query: For the query parameter, formulate questions in such a way that they are as detailed and understandable as possible. All pronouns and vague terms should be replaced with corresponding nouns or phrases so that questions can be used as stand-alone queries without the need for additional context.
+    
+    returns a list of answers
+    """
+
+    return RAG.query(query, only_need_context = True)
 
 
-def call_lightrag_directly(query):
-    # Query to lightrag
-    pass
-
-
-
-def get_chain(llm, response_template: str, rephrase_template: str):
-    # Создание цепочки запросов для LangChain
-    # langchain for query with rephrase and rag
-
-    # Шаблоны для ответа и перефразирования
-    response_prompt = PromptTemplate.from_template(response_template)
-    rephrase_prompt = PromptTemplate.from_template(rephrase_template)
-
-    # RAG-цепочка с LightRAG через прямой вызов
-    light_rag_chain = rephrase_prompt | llm | RunnableLambda(call_lightrag_directly)
-
-    parallel_chain = RunnableParallel(
-        {
-            "question": RunnableLambda(lambda inputs: inputs['question']),
-            "context": light_rag_chain,
-            "chat_history": RunnableLambda(lambda inputs: inputs['chat_history'])
-        }
-    )
     
 
-    # Основная последовательная цепочка обработки и LLM ответа
-    main_chain = parallel_chain | response_prompt | llm
-    return main_chain
+def get_chain(llm, response_template):
+    # Создание цепочки запросов для LangChain с использованием инструментов
+    response_prompt = PromptTemplate.from_template(response_template)
+
+    llm.bind_tools([search])
+    llm_chain = response_prompt | llm
+
+    return llm_chain
+
 
 
 if __name__ == '__main__':
-    # Инициализация LLM с использованием OpenAI API
-    llm = ChatOpenAI(config)
     # Load variables from custom environment
     load_keys()
 
@@ -128,10 +115,18 @@ if __name__ == '__main__':
     # Save variables to custom enviroment 
     save_keys()
 
-    llm_chain = get_chain(llm, response_prompt, rephrase_prompt)
+    
+    # Инициализация LLM с использованием OpenAI API
+    llm = ChatOpenAI(**config)
+
+    # Init rag 
+    RAG = get_default_init_rag()
+
+
+    llm_chain = get_chain(llm, BASE_TEMPLATE)
 
 
     # Запрос на выполнение
-    query = {"question": "Какие задачи решает LightRAG?"}
-    response = llm_chain.run(query)
+    query = {"question": "Как заплатить за ЖКХ?", "chat_history": []}
+    response = llm_chain.invoke(query)
     print(response)

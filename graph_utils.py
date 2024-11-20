@@ -16,7 +16,7 @@ async def llm_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
     return await openai_complete_if_cache(
-        "meta/llama-3.1-405b-instruct",
+        "nvidia/llama-3.1-nemotron-70b-instruct",
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
@@ -68,6 +68,15 @@ def init_rag(working_dir, model, files_dir = './inputs/' ,loaded_files = True):
 
 
 
+def get_default_init_rag(loaded_files = False, working_dir="./.db_caches/", files_dir='./.inputs'):
+    return init_rag(
+        working_dir = working_dir, 
+        model = llm_model_func, 
+        files_dir = files_dir, 
+        loaded_files=loaded_files
+    )
+
+
 
 if __name__ == '__main__':
     from utils import load_keys
@@ -78,7 +87,7 @@ if __name__ == '__main__':
     rag = init_rag(
         working_dir = WORKING_DIR, 
         model = llm_model_func , 
-        files_dir='./inputs', 
+        files_dir='./.inputs', 
         loaded_files=True 
     )
 

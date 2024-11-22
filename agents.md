@@ -1,11 +1,10 @@
 ```mermaid
 graph TD
-    subgraph Agents
-        A[**LLMService**] -->|Delegates tasks| B[SecurityService]
-        A -->|Delegates tasks| C[UserService]
+    subgraph LLM with Tools
+        A[**LLM**] -->|Delegates tasks| C[UserService]
         A -->|Delegates tasks| D[DBService]
         C -->|Validates user data and processes requests| A
-        B -->|Blocks unsafe requests| A
+        S[SecurityService] -->|Safe requests| A
         D -->|Provides contextual data| A
     end
 
@@ -18,15 +17,16 @@ graph TD
     end
 
     subgraph User Interaction
-        U[User Input] -->|Queries| A
+        U[User Input] -->|Queries| S
         A -->|Processed response| U
+        S --> |response in case of violation| U
     end
 ```
 
-### Обновление архитектуры:
-1. **LLMService**:
-   - Центральный агент, маршрутизирующий запросы.
-2. **SecurityService [предварительный вариант]**:
+### Архитектура запросов:
+1. **LLM**:
+   - Основной агент, отвечающий на вопросы и использующий инструменты.
+2. **SecurityService**:
    - Проверяет запросы пользователя на безопасность и блокирует подозрительные инструкции. 
 3. **UserService**:
    - Работает с пользовательскими данными, валидирует и сохраняет их в **User DB**.
@@ -42,12 +42,12 @@ graph TD
 
 ### Пример сценария:
 1. Пользователь запрашивает: _"Какие были последние показания горячей воды?"_
-   - **LLMService** идентифицирует запрос как относящийся к пользовательским данным и отправляет его в **UserService**.
-   - **UserService** проверяет данные в своей базе и возвращает ответ через **LLMService**.
+   - **LLM** идентифицирует запрос как относящийся к пользовательским данным и использует **UserService**.
+   - **UserService** проверяет данные в своей базе и возвращает ответ в **LLM**.
 
-2. Пользователь задаёт контекстный вопрос: _"Сколько воды я использовал за последний год?"_
-   - **LLMService** делегирует запрос к **DBService**, который выполняет вычисления на основе графовой базы данных.
-   - Результат передаётся обратно через **LLMService**.
+2. Пользователь задаёт контекстный вопрос: _"Как мне узнать сколько воды я использовал за последний год?"_
+   - **LLM** использует **DBService**, который выполняет вычисления на основе графовой базы данных.
+   - Результат передаётся обратно через **LLM**.
 
 ---
 

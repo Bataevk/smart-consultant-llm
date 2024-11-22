@@ -16,7 +16,7 @@ async def llm_model_func(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
     return await openai_complete_if_cache(
-        "nvidia/llama-3.1-nemotron-70b-instruct",
+        "meta/llama-3.1-405b-instruct",
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         working_dir = WORKING_DIR, 
         model = llm_model_func , 
         files_dir='./.inputs', 
-        loaded_files=True 
+        loaded_files=False 
     )
 
     # # Perform naive search
@@ -101,5 +101,6 @@ if __name__ == '__main__':
     # print(rag.query("What are the top themes in this story?", param=QueryParam(mode="global")))
 
     # Perform hybrid search
-    print(rag.query("What are the top themes in this story?", param=QueryParam(mode="hybrid")))
+    while True:
+        print(rag.query(input('User query: '), param=QueryParam(mode="hybrid" , only_need_context=False)))
 

@@ -166,6 +166,64 @@ def get_registered_vehicles(user_id: int) -> str:
         return "\n".join([f"Транспортное средство: {vehicle.vehicle_info}" for vehicle in vehicles])
     return "Транспортные средства не найдены."
 
+@tool
+def get_user_info(user_id: int) -> str:
+    """Get information about the user and related data.
+
+    Parameters:
+        user_id: User ID.
+
+    Returns:
+        A string with information about the user or a message if the user is not found.
+    """
+    # Поиск пользователя в базе данных
+    user = session.query(User).filter_by(id=user_id).first()
+    if not user:
+        return f"Пользователь с таким ID не найден."
+
+    # Формирование информации о пользователе
+    info = [f"Имя: {user.name}"]
+
+    # Добавляем данные о показаниях счетчиков
+    if user.meter_readings:
+        meter_readings = "\n".join(
+            [f"- {reading.meter_type}: {reading.value} (дата: {reading.timestamp})" for reading in user.meter_readings]
+        )
+        info.append(f"Показания счетчиков:\n{meter_readings}")
+    else:
+        info.append("Показания счетчиков: отсутствуют")
+
+    # Добавляем данные о медицинских записях
+    if user.medical_appointments:
+        medical_appointments = "\n".join(
+            [f"- Врач: {appointment.doctor}, дата: {appointment.appointment_time}" for appointment in user.medical_appointments]
+        )
+        info.append(f"Медицинские записи:\n{medical_appointments}")
+    else:
+        info.append("Медицинские записи: отсутствуют")
+
+    # Добавляем данные о школьных записях
+    if user.school_enrollments:
+        school_enrollments = "\n".join(
+            [f"- Ребенок: {enrollment.child_name}, школа: {enrollment.school_name}" for enrollment in user.school_enrollments]
+        )
+        info.append(f"Школьные записи:\n{school_enrollments}")
+    else:
+        info.append("Школьные записи: отсутствуют")
+
+    # Добавляем данные о транспортных средствах
+    if user.vehicle_registrations:
+        vehicles = "\n".join(
+            [f"- Транспортное средство: {vehicle.vehicle_info}" for vehicle in user.vehicle_registrations]
+        )
+        info.append(f"Транспортные средства:\n{vehicles}")
+    else:
+        info.append("Транспортные средства: отсутствуют")
+
+    # Возвращаем собранную информацию в виде строки
+    return "\n".join(info)
+
+
 @tool 
 def get_bot_description() -> str:
     """Return a description of the bot's capabilities."""

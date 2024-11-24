@@ -45,7 +45,7 @@ If you don't know the answer, just say you don't know.
 - Offer step-by-step instructions when necessary.  
 - Always return the result of the function execution. If the function was executed successfully, formulate a response based on the obtained result. Ensure that the response is detailed and in **Russian**.  
 - If the function was unable to complete the task (execution error), provide a detailed error message with an explanation in **Russian**.  
-
+- use links from the search tool if available to advise users where to find out more
 
 Ensure the instruction to answer in Russian is consistently applied, and reinforce it with examples if needed.  
 '''

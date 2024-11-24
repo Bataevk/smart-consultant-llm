@@ -3,14 +3,16 @@ from flask_socketio import SocketIO, emit
 import os
 from icecream import ic
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
+
 from user_pack.tools import *
+from user_pack.db_module import add_user, add_message, get_last_messages
 from utils import *
 from graph_pack.graph_utils import get_default_init_rag
 from graph_pack.tools_templates import get_search_tool
-from config import WORKING_DIR, LLM_CONFIG, SYSTEM_PROMT_TOOLS, SYSTEM_PROMPT_RESPONSE
-from llm_module import get_response_llm, get_tools_llm, llm_stream, llm_invoke
+from config import LLM_CONFIG
+from llm_module import get_response_llm, get_tools_llm, llm_stream, llm_invoke, convert_db_messages_to_llm_messages
+
 
 ic.enable()
 
@@ -44,7 +46,8 @@ tools = {
     'register_vehicle': register_vehicle,
     'get_registered_vehicles': get_registered_vehicles,
     'get_all_meter_readings': get_all_meter_readings,
-    'get_bot_description': get_bot_description
+    'get_bot_description': get_bot_description,
+    'get_user_info':get_user_info
 }
 
 # Initialize LLM with OpenAI API
@@ -62,42 +65,72 @@ def handle_disconnect():
 
 @socketio.on('message')
 def handle_message(data):
+    ic(data)
     user_query = data.get('query')
+    id = data.get('id', 0)
+
 
     if not user_query:
         emit('response', {"error": "No query provided"})
         return
 
-    messages = [HumanMessage(user_query)]
+    # Get messages from DB
+    db_messages = get_last_messages(id)
+    messages = convert_db_messages_to_llm_messages(db_messages)
+    
+    messages.append(HumanMessage(user_query))
     model_tools = get_tools_llm(model, tools)
     model_response = get_response_llm(model)
 
     message = ''
 
-    for chunk in llm_stream(model_response, model_tools, messages, tools):
+    for chunk in llm_stream(model_response, model_tools, messages, tools, id):
         message += chunk.content
         emit('response', {"content": chunk.content})
 
-    messages.append(AIMessage(message))
+    # Add message to DB
+    add_message(id, 'human', user_query)
+    add_message(id, 'ai', message)
+
+@app.route('/init_user', methods=['POST'])
+def init_user():
+    ic(request.json)
+    data = request.json
+    user_id = data.get('id')
+    user_name = data.get('user_name')
+
+    return jsonify({'message': add_user(user_id, user_name)})
 
 @app.route('/invoke', methods=['POST'])
 def chat():
+
     data = request.json
+    ic(data)
+
     user_query = data.get('query')
+    id = data.get('id', 0)
 
     if not user_query:
         return jsonify({"error": "No query provided"}), 400
 
-    messages = [HumanMessage(user_query)]
+    # Get messages from DB
+    db_messages = get_last_messages(id)
+    messages = convert_db_messages_to_llm_messages(db_messages)
+
+    messages.append(HumanMessage(user_query))
     model_tools = get_tools_llm(model, tools)
     model_response = get_response_llm(model)
 
-    message = llm_invoke(model_response, model_tools, messages, tools)
+    message = llm_invoke(model_response, model_tools, messages, tools, id)
 
-    messages.append(AIMessage(message))
+    # Add message to DB
+    add_message(id, 'human', user_query)
+    add_message(id, 'ai', message.content)
 
-    return jsonify({"response": message})
+    return jsonify({"text": message.content})
 
 
 if __name__ == '__main__':
+    # Добавление бесплатого юзера
+    add_user(0, "Бесплатный пользователь")
     socketio.run(app, debug=True)

@@ -29,7 +29,7 @@ def get_response_llm(model):
     return PromptTemplate.from_template(SYSTEM_PROMPT_RESPONSE) | model
 
 
-def __llm_get_tools_messages(model_tools, tools, chat_messages):
+def __llm_get_tools_messages(model_tools, tools, chat_messages, id = 0 ):
     
     messages = chat_messages[:]
     
@@ -44,7 +44,7 @@ def __llm_get_tools_messages(model_tools, tools, chat_messages):
             ic(tool_call)
             
             if tool_call['args'].get('user_id'):
-                tool_call['args']['user_id'] = 123
+                tool_call['args']['user_id'] = id
 
             tool_msg = selected_tool.invoke(tool_call)
 
@@ -55,13 +55,15 @@ def __llm_get_tools_messages(model_tools, tools, chat_messages):
     return messages
 
 
-def llm_stream(response_model, model_tools, messages, tools):
-    return response_model.stream(__llm_get_tools_messages(model_tools, tools, messages))
+def llm_stream(response_model, model_tools, messages, tools, id = 0):
+    return response_model.stream(__llm_get_tools_messages(model_tools, tools, messages, id))
 
-def llm_invoke(response_model, model_tools, messages, tools):
-    return response_model.invoke(__llm_get_tools_messages(model_tools, tools, messages))
+def llm_invoke(response_model, model_tools, messages, tools, id = 0):
+    return response_model.invoke(__llm_get_tools_messages(model_tools, tools, messages, id))
 
-
+def convert_db_messages_to_llm_messages(db_messages):
+    return [HumanMessage(msg.content) if msg.message_type == 'human' else AIMessage(msg.content) for msg in db_messages]
+    # Messages by db: (msg.message_type, msg.content, msg.timestamp)
 
 
 # --------------------------------------------------------------------------------------------------------------------------------
@@ -91,7 +93,7 @@ if __name__ == '__main__':
 
     tools = {
         'search': search,
-        'submit_meter_reading' : submit_meter_reading,
+        'submit_meter_reading': submit_meter_reading,
         'get_last_meter_reading': get_last_meter_reading,
         'schedule_medical_appointment': schedule_medical_appointment,
         'get_medical_appointments': get_medical_appointments,
@@ -99,9 +101,11 @@ if __name__ == '__main__':
         'get_school_enrollments': get_school_enrollments,
         'register_vehicle': register_vehicle,
         'get_registered_vehicles': get_registered_vehicles,
-        'get_all_meter_readings':get_all_meter_readings,
-        'get_bot_description':get_bot_description
-        }
+        'get_all_meter_readings': get_all_meter_readings,
+        'get_bot_description': get_bot_description,
+        'get_user_info':get_user_info
+    }
+
     # --------------------------------------------------------------------------------------------------------------------------------
 
 

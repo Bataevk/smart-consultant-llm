@@ -31,7 +31,7 @@ LLM bot for consulting users on system data using lightRAG technology
 3. **Установка Telegram бота:**
    - Следуйте инструкциям по установке Telegram бота из репозитория по ссылке: [ССЫЛКА](https://github.com/Bataevk/simple-telegram-bot-for-LLM)
 
-4. **Выбор провайдера/локального сервера и модели
+4. **Выбор провайдера/локального сервера и модели**
    *Использование внешних API и локальных серверов:*
   - Вы можете использовать внешние API с LLM, такие как Nvidia NIM и другие.
   - Также возможен запуск локального сервера (Ollama, LM Studio).

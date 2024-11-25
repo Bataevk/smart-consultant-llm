@@ -5,7 +5,7 @@ from icecream import ic
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Локальные импорты
 from user_pack.tools import *
@@ -14,6 +14,7 @@ from graph_pack.graph_utils import get_default_init_rag
 from graph_pack.tools_templates import get_search_tool
 from config import WORKING_DIR, LLM_CONFIG, SYSTEM_PROMT_TOOLS, SYSTEM_PROMPT_RESPONSE
 from utils.logs_module import logger
+from security_pack.censor_module import check_message
 
 
 ic.enable()
@@ -33,6 +34,9 @@ def get_response_llm(model):
 def __llm_get_tools_messages(model_tools, tools, chat_messages, id = 0 ):
     
     messages = chat_messages[:]
+
+    if not (check_message(messages[-1].content)):
+        return messages[:-1].extend([SystemMessage('Пользователь написал сообщение на запрещенные темы')])
     
     response = model_tools.invoke(messages)
 
@@ -63,7 +67,12 @@ def llm_invoke(response_model, model_tools, messages, tools, id = 0):
     return response_model.invoke(__llm_get_tools_messages(model_tools, tools, messages, id))
 
 def convert_db_messages_to_llm_messages(db_messages):
-    return [HumanMessage(msg.content) if msg.message_type == 'human' else AIMessage(msg.content) for msg in db_messages]
+    type = {
+        'human': HumanMessage,
+        'ai': AIMessage,
+        'system': SystemMessage
+    }
+    return [type.get(msg.message_type, 'human')(msg.content)  for msg in db_messages]
     # Messages by db: (msg.message_type, msg.content, msg.timestamp)
 
 

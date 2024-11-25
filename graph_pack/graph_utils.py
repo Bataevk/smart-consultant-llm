@@ -74,7 +74,7 @@ if __name__ == '__main__':
         working_dir = WORKING_DIR, 
         model = llm_model_func , 
         files_dir=DOCUMENTS_DIR, 
-        loaded_files=False 
+        loaded_files=True 
     )
 
     print('Загрузка выполнена!')

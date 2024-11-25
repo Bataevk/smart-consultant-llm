@@ -2,6 +2,8 @@
 LLM bot for consulting users on system data using lightRAG technology
 
 ---
+Все необходимые репазитории закреплены в профиле
+---
 
 # Инструкция по использованию приложения
 
@@ -72,3 +74,4 @@ LLM bot for consulting users on system data using lightRAG technology
 - **Производительность:**
   - Скорость работы графовой базы данных и локальной LLM зависит от производительности устройства.
   - Рекомендуется использовать модели с GPQA и MMLU не ниже 30 и 75 соответственно.
+

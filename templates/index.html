@@ -105,7 +105,6 @@
             <button id="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
-
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         const socket = io('http://127.0.0.1:5000');
@@ -114,11 +113,20 @@
         const sendButton = document.getElementById('send-button');
         let currentBotMessageDiv = null;
         let isLoading = false;
-
+    
+        // Получаем или генерируем уникальный ID для пользователя
+        let userId = localStorage.getItem('userId');
+    
+        // Если userId нет в localStorage, генерируем новый и сохраняем
+        if (!userId) {
+            userId = Math.floor(Math.random() * 1000000000);  // Генерация случайного числа
+            localStorage.setItem('userId', userId);  // Сохранение в localStorage
+        }
+    
         socket.on('connect', function() {
             console.log('Connected to server');
         });
-
+    
         socket.on('response', function(data) {
             if (currentBotMessageDiv) {
                 appendChunkToMessage(currentBotMessageDiv, data.content);
@@ -127,14 +135,15 @@
             sendButton.classList.remove('disabled');
             sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
         });
-
+    
         function sendMessage() {
             if (isLoading) return;
-
+    
             const message = inputMessage.value;
             if (message.trim()) {
                 appendMessage(message, 'user');
-                socket.emit('message', { query: message });
+                // Отправка сообщения с query и userId
+                socket.emit('message', { query: message, id: userId });
                 inputMessage.value = '';
                 currentBotMessageDiv = createMessageDiv('bot');
                 chatBox.appendChild(currentBotMessageDiv);
@@ -143,14 +152,14 @@
                 sendButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
             }
         }
-
+    
         function appendMessage(text, sender) {
             const messageDiv = createMessageDiv(sender);
             appendChunkToMessage(messageDiv, text);
             chatBox.appendChild(messageDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
+    
         function createMessageDiv(sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
@@ -159,20 +168,21 @@
             messageDiv.appendChild(messageContent);
             return messageDiv;
         }
-
+    
         function appendChunkToMessage(messageDiv, chunk) {
             const messageContent = messageDiv.querySelector('.message-content');
-            // Replace newlines and tabs with HTML tags
+            // Заменяем новые строки и табуляции на HTML теги
             chunk = chunk.replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
             messageContent.innerHTML += chunk;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
+    
         inputMessage.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isLoading) {
                 sendMessage();
             }
         });
     </script>
+    
 </body>
 </html>

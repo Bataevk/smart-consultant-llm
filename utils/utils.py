@@ -1,5 +1,4 @@
 import os
-from icecream import ic
 from dotenv import load_dotenv
 
 def load_keys():

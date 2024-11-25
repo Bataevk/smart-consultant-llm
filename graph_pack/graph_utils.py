@@ -66,7 +66,7 @@ def get_default_init_rag(loaded_files = False, working_dir="./.db_caches/", file
 
 if __name__ == '__main__':
     # загрузка сущностей из файлов в граф
-    from utils import load_keys
+    from utils.utils import load_keys
 
     load_keys()
 

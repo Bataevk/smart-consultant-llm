@@ -9,10 +9,11 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 # Локальные импорты
 from user_pack.tools import *
-from utils import *
+from utils.utils import *
 from graph_pack.graph_utils import get_default_init_rag
 from graph_pack.tools_templates import get_search_tool
 from config import WORKING_DIR, LLM_CONFIG, SYSTEM_PROMT_TOOLS, SYSTEM_PROMPT_RESPONSE
+from utils.logs_module import logger
 
 
 ic.enable()
@@ -41,14 +42,14 @@ def __llm_get_tools_messages(model_tools, tools, chat_messages, id = 0 ):
         selected_tool = tools.get(tool_name, None)
 
         if selected_tool:
-            ic(tool_call)
+            logger.debug(tool_call)
             
             if tool_call['args'].get('user_id'):
                 tool_call['args']['user_id'] = id
 
             tool_msg = selected_tool.invoke(tool_call)
 
-            ic(tool_msg)
+            logger.debug(tool_msg)
 
             messages.append(tool_msg)
     

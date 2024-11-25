@@ -1,13 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import os
 from icecream import ic
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
+from utils.logs_module import logger
 
 from user_pack.tools import *
 from user_pack.db_module import add_user, add_message, get_last_messages
-from utils import *
+from utils.utils import *
 from graph_pack.graph_utils import get_default_init_rag
 from graph_pack.tools_templates import get_search_tool
 from config import LLM_CONFIG
@@ -55,20 +56,26 @@ model = ChatOpenAI(**LLM_CONFIG)
 
 
 
+@app.route('/')
+def index():
+    """Отображает index.html на главной странице."""
+    return render_template('./index.html')
+
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
+    logger.info('Client connected')
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print('Client disconnected')
+    logger.info('Client disconnected')
 
 @socketio.on('message')
 def handle_message(data):
-    ic(data)
+    logger.debug(data)
     user_query = data.get('query')
     id = data.get('id', 0)
 
+    add_user(id, 'Веб пользователь')
 
     if not user_query:
         emit('response', {"error": "No query provided"})
@@ -94,7 +101,7 @@ def handle_message(data):
 
 @app.route('/init_user', methods=['POST'])
 def init_user():
-    ic(request.json)
+    logger.debug(request.json)
     data = request.json
     user_id = data.get('id')
     user_name = data.get('user_name')
@@ -105,7 +112,7 @@ def init_user():
 def chat():
 
     data = request.json
-    ic(data)
+    logger.debug(data)
 
     user_query = data.get('query')
     id = data.get('id', 0)
@@ -129,8 +136,9 @@ def chat():
 
     return jsonify({"text": message.content})
 
+def start_server(host = '127.0.0.1',port = 5000):
+    add_user(0, "Бесплатный пользователь")
+    socketio.run(app, debug=True, host=host, port=port)
 
 if __name__ == '__main__':
-    # Добавление бесплатого юзера
-    add_user(0, "Бесплатный пользователь")
-    socketio.run(app, debug=True)
+   start_server()

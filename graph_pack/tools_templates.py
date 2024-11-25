@@ -2,6 +2,7 @@
 from icecream import ic
 from langchain.tools import tool  
 from lightrag import QueryParam
+import logging
 
 # Локальные импорты
 from graph_pack.graph_utils import get_default_init_rag
@@ -18,8 +19,8 @@ def get_search_tool(RAG):
         Returns:
             A list of answers or the most relevant response from the knowledge base.
         """
-        ic('-------------------------------- USE Graph Search --------------------------------')
-        ic('QUERY : ' + query)
+        logging.debug('-------------------------------- USE Graph Search --------------------------------')
+        logging.debug('QUERY : ' + query)
 
         return RAG.query(query, param=QueryParam(mode=GRAPH_SEARCH_MODE, only_need_context = True))
     return search

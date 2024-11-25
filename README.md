@@ -26,7 +26,7 @@ LLM bot for consulting users on system data using lightRAG technology
      ```
 
 2. **Скачивание и распаковка кеша базы данных:**
-   - Скачайте архив с кешом базы данных и распакуйте его в корневую директорию проекта, чтобы в корне была папка `./.db_caches`.
+   - Скачайте архив с кешом базы данных и распакуйте его в корневую директорию проекта, чтобы в корне была папка `./.db_caches`: [ССЫЛКА](https://drive.google.com/file/d/1BmwmjxY6qcdbc443L1kINPpFszLWEabE/view?usp=sharing)
 
 3. **Установка Telegram бота:**
    - Следуйте инструкциям по установке Telegram бота из репозитория по ссылке: [ССЫЛКА](https://github.com/Bataevk/simple-telegram-bot-for-LLM)

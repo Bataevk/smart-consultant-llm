@@ -17,7 +17,7 @@ LLM bot for consulting users on system data using lightRAG technology
    - Скачайте архив с кешом базы данных и распакуйте его в корневую директорию проекта, чтобы в корне была папка `./.db_caches`.
 
 3. **Установка Telegram бота:**
-   - Следуйте инструкциям по установке Telegram бота из репозитория по ссылке: [ССЫЛКА](#)
+   - Следуйте инструкциям по установке Telegram бота из репозитория по ссылке: [ССЫЛКА](https://github.com/Bataevk/simple-telegram-bot-for-LLM)
 
 4. **Настройка API ключа:**
    - Установите API ключ для сервера с LL в переменных окружения.
@@ -48,7 +48,7 @@ LLM bot for consulting users on system data using lightRAG technology
      ```sh
      python ./graph_pack/graph_module.py
      ```
-     Для генерации графа используются файлы с госуслуг, полученные через парсер. Ссылка на парсер: [ССЫЛКА](#)
+     Для генерации графа используются файлы с госуслуг, полученные через парсер. Ссылка на парсер: [ССЫЛКА](https://github.com/Bataevk/gosuslugi-faq-parser)
 
 ## Логирование
 

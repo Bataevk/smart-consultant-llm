@@ -22,5 +22,5 @@ def get_search_tool(RAG):
         logging.debug('-------------------------------- USE Graph Search --------------------------------')
         logging.debug('QUERY : ' + query)
 
-        return RAG.query(query, param=QueryParam(mode=GRAPH_SEARCH_MODE, only_need_context = True))
+        return RAG.query(query, param=QueryParam(mode=GRAPH_SEARCH_MODE, only_need_context = False))
     return search

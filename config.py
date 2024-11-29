@@ -37,7 +37,8 @@ Use the following tool results to answer the question.
 If you don't know the answer, just say you don't know.
 
 Given the context information and not prior knowledge, \
-answer the query asking about citations over different topics.
+answer the query asking over different topics.
+
 
 {messages}
 
